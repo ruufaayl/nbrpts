@@ -1,14 +1,12 @@
-import Link from "next/link";
-import { ArrowLeft, Activity } from "lucide-react";
 import { supabaseServer } from "@/lib/supabase/server";
 import type { QueryLogRow } from "@/lib/supabase/types";
+import { DevNav } from "./_components/nav";
 import { QueryFeed } from "./query-feed";
 import { PingButton } from "./ping-button";
 
 export const dynamic = "force-dynamic";
 
 async function fireDevPing() {
-  // Server-side: hit the RPC once on every page load so the feed is never empty.
   await supabaseServer.rpc("dev_ping");
 }
 
@@ -31,21 +29,7 @@ export default async function DevObservatoryPage() {
 
   return (
     <main className="min-h-screen">
-      <div className="border-b border-[var(--color-border)]">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 text-sm text-[var(--color-fg-muted)] transition hover:text-[var(--color-fg)]"
-          >
-            <ArrowLeft className="size-4" />
-            Back
-          </Link>
-          <div className="flex items-center gap-2 font-mono text-xs uppercase tracking-widest text-[var(--color-fg-muted)]">
-            <Activity className="size-3.5 text-[var(--color-accent)]" />
-            Database Observatory
-          </div>
-        </div>
-      </div>
+      <DevNav active="/dev" />
 
       <div className="mx-auto max-w-6xl px-6 py-12">
         <div className="flex flex-wrap items-end justify-between gap-6">

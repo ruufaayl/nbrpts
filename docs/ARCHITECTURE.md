@@ -5,7 +5,7 @@
                                 │  Anonymous visitor   │
                                 └──────────┬───────────┘
                                            │
-              /            (auth-gated)    ▼            /dev
+              /            (auth-gated)    ▼            /dev, /dev/schema
               │           /hospital                     │
               │           /ai-engine                    │
               │           /officer                      │
@@ -21,11 +21,12 @@
         ┌──────────────────────────────────────────────────────────┐
         │                  Supabase Postgres                       │
         │                                                          │
-        │  • All schema in supabase/migrations/*.sql               │
-        │  • All business logic in Postgres functions              │
+        │  • 13 tables (3NF) + 12 enums in supabase/migrations/    │
+        │  • All business logic lives in Postgres functions        │
         │  • Audit + verification triggers (Phase 3)               │
         │  • Row-Level Security on every table (Phase 4)           │
         │  • Realtime publication streams query_log → /dev          │
+        │  • get_schema() RPC drives /dev/schema observatory       │
         └──────────────────────────────────────────────────────────┘
 ```
 
@@ -40,24 +41,48 @@ Every RPC the app calls writes a row to `public.query_log` recording:
 - `rows_returned` — affected rows
 - `plan` — `EXPLAIN (FORMAT JSON)` output as JSONB
 
-The `/dev` observatory subscribes to this table via Supabase Realtime. New rows animate in within ~100 ms of being written.
+The `/dev` observatory subscribes to this table via Supabase Realtime. New rows animate in within ~100 ms.
 
-This convention scales: every function added in later phases (`submit_birth_record`, `verify_record`, `issue_bform`, …) writes its own `query_log` entry, so the observatory automatically tracks everything without app-level instrumentation.
+## The 13 entities (Phase 2)
+
+```
+hospital ──┬─── birth_record ──┬─── child ──── child_guardian ──── parent_guardian
+           │       │            │      │
+           │       │            │      └─── bform ──── nadra_officer ── nadra_office
+           │       │            │
+           │       ├── verification_log ── nadra_officer
+           │       │
+           │       └── ai_review_log ── nadra_officer (override)
+           │
+           ├── offline_queue
+           │
+           └── audit_trail (free-form, references any table)
+
+           notifications  (free-form, references any table)
+```
+
+Visit [`/dev/schema`](/dev/schema) for the live, draggable rendering.
 
 ## File map
 
 ```
 app/
-├── (marketing)/        # public landing — Phase 1
+├── (marketing)/        # public landing
 │   └── page.tsx
 ├── (portals)/          # auth-gated — Phases 5–7
 │   ├── hospital/
 │   ├── ai-engine/
 │   └── officer/
-├── dev/                # database observatory — Phase 1 (skeleton), Phase 8 (full)
-│   ├── page.tsx
+├── dev/                # database observatory
+│   ├── _components/
+│   │   └── nav.tsx     # shared nav strip
+│   ├── page.tsx        # query feed (Phase 1)
 │   ├── query-feed.tsx
-│   └── ping-button.tsx
+│   ├── ping-button.tsx
+│   └── schema/         # Phase 2
+│       ├── page.tsx
+│       ├── schema-diagram.tsx
+│       └── table-node.tsx
 └── layout.tsx
 
 lib/
@@ -66,10 +91,17 @@ lib/
 │   ├── server.ts       # server, anon
 │   ├── admin.ts        # server-only, service role
 │   └── types.ts
+├── schema/             # Phase 2
+│   ├── types.ts
+│   └── layout.ts       # dagre wrapper
 └── utils.ts
 
 supabase/
 └── migrations/
     ├── 0000_init_query_log.sql
-    └── 0001_dev_ping_rpc.sql
+    ├── 0001_dev_ping_rpc.sql
+    ├── 0002_enums.sql
+    ├── 0003_core_tables.sql
+    ├── 0004_get_schema_rpc.sql
+    └── 0005_seed.sql
 ```
