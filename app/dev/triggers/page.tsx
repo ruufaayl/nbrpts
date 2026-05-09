@@ -11,98 +11,32 @@ import { TriggerLab } from "./trigger-lab";
 
 export const dynamic = "force-dynamic";
 
+type LabData = {
+  pending_records: PendingBirthOption[];
+  pending_bforms: PendingBformOption[];
+  current_bforms: CurrentBformOption[];
+  recent_audit: AuditEntry[];
+  officers: { officer_id: string; full_name: string; employee_no: string }[];
+  generated_at: string;
+};
+
 async function loadAll() {
-  const [summaryRes, pendingRes, bformsRes, childrenRes, auditRes, officerRes] =
-    await Promise.all([
-      supabaseServer.rpc("get_pipeline_summary"),
-      supabaseServer
-        .from("birth_record")
-        .select(
-          "birth_record_id, brn, status, submitted_at, mother:parent_guardian!birth_record_mother_id_fkey(full_name), hospital(hospital_name)"
-        )
-        .in("status", ["PENDING", "FLAGGED"])
-        .order("submitted_at", { ascending: false })
-        .limit(20),
-      supabaseServer
-        .from("bform")
-        .select(
-          "bform_id, bform_number, authorized_at, child:child(child_id, full_name)"
-        )
-        .is("authorized_at", null)
-        .eq("is_current", true)
-        .order("created_at", { ascending: false })
-        .limit(20),
-      supabaseServer
-        .from("bform")
-        .select("bform_number, version, child:child(child_id, full_name)")
-        .eq("is_current", true)
-        .not("authorized_at", "is", null)
-        .order("created_at", { ascending: false })
-        .limit(20),
-      supabaseServer
-        .from("audit_trail")
-        .select(
-          "audit_id, actor_type, actor_id, action_type, table_affected, record_id, action_datetime, description"
-        )
-        .order("action_datetime", { ascending: false })
-        .limit(20),
-      supabaseServer
-        .from("nadra_officer")
-        .select("officer_id, full_name, employee_no")
-        .neq("employee_no", "EMP-999999")
-        .eq("is_active", true)
-        .order("full_name")
-        .limit(10),
-    ]);
+  const [summaryRes, labRes] = await Promise.all([
+    supabaseServer.rpc("get_pipeline_summary"),
+    supabaseServer.rpc("get_trigger_lab_data"),
+  ]);
 
   const summary = (summaryRes.data ?? null) as PipelineSummary | null;
+  const lab = (labRes.data ?? null) as LabData | null;
 
-  const pending: PendingBirthOption[] = (pendingRes.data ?? []).map(
-    (r) => ({
-      birth_record_id: r.birth_record_id,
-      brn: r.brn,
-      status: r.status,
-      submitted_at: r.submitted_at,
-      mother_name:
-        // @ts-expect-error supabase typing for embedded relation
-        r.mother?.full_name ?? "—",
-      hospital_name:
-        // @ts-expect-error supabase typing for embedded relation
-        r.hospital?.hospital_name ?? "—",
-    })
-  );
-
-  const pendingBforms: PendingBformOption[] = (bformsRes.data ?? []).map(
-    (b) => ({
-      bform_id: b.bform_id,
-      bform_number: b.bform_number,
-      authorized_at: b.authorized_at,
-      // @ts-expect-error supabase typing for embedded relation
-      child_id: b.child?.child_id ?? "",
-      // @ts-expect-error supabase typing for embedded relation
-      child_name: b.child?.full_name ?? "—",
-    })
-  );
-
-  const currentBforms: CurrentBformOption[] = (childrenRes.data ?? []).map(
-    (b) => ({
-      bform_number: b.bform_number,
-      version: b.version,
-      // @ts-expect-error supabase typing for embedded relation
-      child_id: b.child?.child_id ?? "",
-      // @ts-expect-error supabase typing for embedded relation
-      child_name: b.child?.full_name ?? "—",
-    })
-  );
-
-  const audit = (auditRes.data ?? []) as AuditEntry[];
-  const officers = (officerRes.data ?? []) as {
-    officer_id: string;
-    full_name: string;
-    employee_no: string;
-  }[];
-
-  return { summary, pending, pendingBforms, currentBforms, audit, officers };
+  return {
+    summary,
+    pending: lab?.pending_records ?? [],
+    pendingBforms: lab?.pending_bforms ?? [],
+    currentBforms: lab?.current_bforms ?? [],
+    audit: lab?.recent_audit ?? [],
+    officers: lab?.officers ?? [],
+  };
 }
 
 export default async function TriggersLabPage() {
