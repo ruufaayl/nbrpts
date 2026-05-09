@@ -290,3 +290,20 @@ begin
      'PENDING', now() - interval '6 hours', null, null);
 
 end$$;
+
+-- Refresh planner stats so pg_class.reltuples reflects the seed rather than -1.
+-- The /dev/schema observatory uses reltuples for the row-count column.
+analyze public.hospital;
+analyze public.nadra_office;
+analyze public.nadra_officer;
+analyze public.parent_guardian;
+analyze public.birth_record;
+analyze public.child;
+analyze public.child_guardian;
+analyze public.bform;
+analyze public.verification_log;
+analyze public.ai_review_log;
+analyze public.audit_trail;
+analyze public.offline_queue;
+analyze public.notifications;
+analyze public.query_log;
