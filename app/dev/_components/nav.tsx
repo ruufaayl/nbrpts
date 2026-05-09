@@ -6,6 +6,7 @@ type NavItem = { href: string; label: string };
 const items: NavItem[] = [
   { href: "/dev", label: "Query feed" },
   { href: "/dev/schema", label: "Schema" },
+  { href: "/dev/triggers", label: "Triggers" },
 ];
 
 export function DevNav({ active }: { active: NavItem["href"] }) {

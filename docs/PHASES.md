@@ -5,8 +5,8 @@ Eight phases plus a polish phase. Each phase ends with a deployable, demo-able a
 | # | Phase | Status | Deliverable |
 |---|---|---|---|
 | 1 | Foundations | 🟢 done | Repo, Vercel deploy, Supabase project, Next.js + Tailwind scaffold, CI, `/dev` observatory with `dev_ping()` streaming via Realtime |
-| 2 | **Schema & migrations** | 🟢 done | All 13 tables (`hospital`, `nadra_office`, `nadra_officer`, `parent_guardian`, `birth_record`, `child`, `child_guardian`, `bform`, `verification_log`, `ai_review_log`, `audit_trail`, `offline_queue`, `notifications`) as raw `.sql` migrations; 12 enums; realistic seed data; `get_schema()` RPC; live ER diagram on `/dev/schema` via react-flow + dagre |
-| 3 | Triggers & functions | ⚪ pending | `audit_trail` trigger on every relevant table, `verification_log` trigger on status change, B-Form generation function, CNIN assignment, reissuance versioning, state-machine validator |
+| 2 | Schema & migrations | 🟢 done | All 13 tables as raw `.sql` migrations; 12 enums; 24 indexes; realistic seed data; `get_schema()` RPC; live ER diagram on `/dev/schema` via react-flow + dagre |
+| 3 | **Triggers & functions** | 🟢 done | Generic audit trigger on 12 tables, birth-record state machine validator, status-change logger, post-verification cascade (auto-creates child + B-Form + SMS), B-Form authorization & versioned reissuance, six business RPCs, interactive `/dev/triggers` lab |
 | 4 | RLS & auth | ⚪ pending | Hospital-staff / officer / admin roles, RLS policies on every table, login UI, signed-in `/dev` features |
 | 5 | Hospital portal | ⚪ pending | Multi-step birth form, IndexedDB offline queue, submissions table, device-simulator page |
 | 6 | AI engine | ⚪ pending | Gemini Flash integration + rules fallback, `ai_review_log` writes, live processing feed |
@@ -16,47 +16,64 @@ Eight phases plus a polish phase. Each phase ends with a deployable, demo-able a
 
 ## Phase 1 — Done ✅
 
-- Supabase project (`ap-southeast-1`, free tier)
-- `query_log` table + `dev_ping` RPC
-- Next.js 16 + Tailwind v4 + Geist scaffold
-- Three-tier Supabase clients
-- `/dev` observatory streams query log via Realtime
-- Marketing landing
-- GitHub repo + Vercel auto-deploy + CI
-- Phase 1 docs
+Foundations: Supabase project, scaffold, query-log table + `dev_ping()` RPC, `/dev` realtime feed, GitHub + Vercel auto-deploy, CI.
 
 ## Phase 2 — Done ✅
 
-### Schema
-- **13 tables** in 3NF with PKs, FKs, CHECK constraints, partial indexes, and table comments
-- **12 enums** for type-safe state machines (`record_status_t`, `gender_t`, `delivery_type_t`, `birth_outcome_t`, `ai_verdict_t`, `relationship_type_t`, `notification_channel_t`, `notification_status_t`, `recipient_type_t`, `queue_status_t`, `actor_type_t`, `hospital_type_t`, `province_t`)
-- **RLS enabled** on every table (policies arrive in Phase 4 — current state denies all anon access, which is the secure default)
-- **24 indexes** including partial indexes (`bform_one_current_per_child`, `birth_record_father_idx`, `offline_queue_pending_idx`)
-- Format CHECKs on identifiers: CNIC `XXXXX-XXXXXXX-X`, BRN `BRN-YYYY-XXXXXXXX`, CNIN `CNIN-XXXXXXXXXX`, B-Form `BF-YYYY-XXXXXXXX`, PMDC license `PMDC-NNNNNN`, etc.
+13 tables in 3NF, 12 enums, 15 FKs, 24 indexes, format-validating CHECKs, `get_schema()` RPC, react-flow ER diagram on `/dev/schema`, 86 rows of realistic seed data spanning every state in the verification state machine.
 
-### Seed data (deterministic, idempotent)
-- 5 hospitals across SINDH / PUNJAB / KPK
-- 4 NADRA offices
-- 6 officers
-- 12 parent_guardian rows (5 mothers + 5 fathers + 1 temp-ID-only mother + 1 grandmother as secondary guardian)
-- 8 birth_records spanning every state in the verification state machine: 4 VERIFIED, 1 FLAGGED, 1 PENDING, 1 REJECTED, 1 AMENDED
-- 4 children with CNINs assigned and dual-parent linkage
-- 3 issued B-Forms (4th awaits officer authorization)
-- 7 ai_review_log entries (5 PASS + 2 FLAG with realistic flag payloads)
-- 7 verification_log entries
-- 4 notifications (3 SENT + 1 QUEUED)
-- 4 audit_trail entries
-- 2 offline_queue rows (1 SYNCED + 1 PENDING)
+## Phase 3 — Done ✅
 
-### Observatory
-- `public.get_schema()` SECURITY DEFINER RPC introspects `information_schema` and returns `{tables[], foreign_keys[], generated_at}` as JSONB
-- `/dev/schema` server-renders the ER diagram from that RPC; client uses **react-flow** with **dagre** auto-layout (rankdir LR)
-- Custom `TableNode` shows: PK/FK/UQ icons, NOT NULL marker, RLS badge, row-count estimate, type abbreviations
-- Animated FK edges with column-name labels
-- Stat strip: 14 tables · 15 FKs · ~70 seed rows
-- Shared `DevNav` connects `/dev` (query feed) and `/dev/schema`
+### Schema additions
+- `birth_record.child_full_name` (nullable) and `child_gender` (NOT NULL) — captured at submission, copied into `child` on verification
+- `bform.authorized_at` — timestamp the officer flips after review; until set, the SMS is held in `notifications` with status `QUEUED`
+- Two sequences (`cnin_seq` starts at 1000000005, `bform_seq` starts at 10010004) for deterministic identifier minting
+- `EMP-999999` AI Engine system officer so trigger-driven status changes have a non-null `officer_id`
+
+### Triggers (six total across four tables)
+| Trigger | Table | Timing | Purpose |
+|---|---|---|---|
+| `trg_audit_<table>` × 12 | every domain table | AFTER INSERT/UPDATE/DELETE | writes one row to `audit_trail` per mutation; actor pulled from `app.actor_type` / `app.actor_id` session vars |
+| `trg_birth_record_state_machine` | birth_record | BEFORE UPDATE OF status | rejects illegal transitions per the proposal's state machine |
+| `trg_birth_record_log_status` | birth_record | AFTER UPDATE OF status | inserts a `verification_log` row for every status change |
+| `trg_birth_record_post_verification` | birth_record | AFTER UPDATE OF status WHEN VERIFIED | creates `child` (with new CNIN), links `child_guardian` for mother + father, generates `bform` (unauthorized), queues SMS |
+
+A single `verify_birth_record(...)` call therefore fires **6 triggers** (state machine, audit, status logger, cascade, plus 4 audit triggers on each cascaded INSERT) and produces **5 new rows** across 5 tables, all in one transaction.
+
+### State machine (enforced by trigger)
+```
+PENDING ──► VERIFIED        (AI auto-approve or officer)
+PENDING ──► FLAGGED         (AI flag → human review)
+PENDING ──► REJECTED        (officer rejects)
+FLAGGED ──► VERIFIED        (officer approves)
+FLAGGED ──► REJECTED        (officer rejects)
+REJECTED ──► PENDING        (hospital resubmits)
+VERIFIED ──► AMENDED        (officer edits)
+AMENDED  ──► AMENDED        (subsequent edits)
+```
+Anything else raises `errcode = check_violation`.
+
+### Business RPCs (six)
+- `submit_birth_record(...)` — hospital portal entry point
+- `verify_birth_record(birth_record_id, officer_id, remarks)` — officer or AI auto-approve
+- `flag_birth_record(...)` — AI engine flags for human review
+- `reject_birth_record(...)` — officer rejects (reason required)
+- `resubmit_birth_record(...)` — hospital pushes a REJECTED record back to PENDING
+- `authorize_bform(bform_id, officer_id)` — officer flips `authorized_at`; SMS promoted from QUEUED to SENT
+- `reissue_bform(child_id, officer_id, reason)` — versioned reissuance; prior version retained, marked `is_current = false`
+- `get_pipeline_summary()` — JSONB roll-up used by `/dev/triggers`
+
+All RPCs are SECURITY DEFINER, instrument themselves into `query_log`, and set the audit-actor session vars before the UPDATE.
+
+### Interactive demo
+`/dev/triggers` — four action cards (submit / verify / authorize / reissue), live pipeline-summary stat strip, and the latest 20 `audit_trail` entries. Every click is a single `supabase.rpc()` call; the page revalidates and the new state appears.
+
+### Hardening (migration 0012)
+- Trigger-only functions (`fn_audit_trail`, `fn_log_status_change`, `fn_post_verification_cascade`) had EXECUTE revoked from `anon`, `authenticated`, and `public` so they can no longer be called via `/rest/v1/rpc/*`. They still fire as triggers because Postgres invokes trigger functions internally regardless of grants.
+- `fn_validate_birth_record_status` had its search_path pinned to `public`.
 
 ### Advisor verdict
-- 13× INFO `rls_enabled_no_policy` — **expected**, Phase 4 will add policies
-- 2× WARN `anon_security_definer_function_executable` on `dev_ping` and `get_schema` — **intentional**, both are explicitly public observatory RPCs
+- 13× INFO `rls_enabled_no_policy` — expected; Phase 4 fixes
+- WARN advisors only on functions intentionally exposed (the 7 business RPCs + 3 observatory RPCs)
+- Trigger-only function warnings cleared by 0012
 - Zero ERROR-level findings
