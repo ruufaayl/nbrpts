@@ -13,8 +13,10 @@ const NAV = [
   { href: "/dev",       label: "Observatory", icon: Database },
 ];
 
-// Routes that already render their own scoped header.
+// Routes that own their own header (scoped portal layouts) or are the
+// cinematic landing page where the global nav would interrupt the design.
 const SCOPED_ROUTES = ["/hospital", "/officer", "/login"];
+const HIDE_EXACT = new Set(["/"]);
 
 export function GlobalNav() {
   const pathname = usePathname();
@@ -29,6 +31,7 @@ export function GlobalNav() {
     return () => window.removeEventListener("scroll", onScroll);
   }, []);
 
+  if (HIDE_EXACT.has(pathname)) return null;
   if (SCOPED_ROUTES.some((r) => pathname === r || pathname.startsWith(r + "/"))) {
     return null;
   }

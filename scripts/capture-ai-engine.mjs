@@ -67,12 +67,34 @@ const goto = async (url) => {
   }
 };
 
-const snap = async (filename, { fullPage = true } = {}) => {
-  // disable animations + RAF for stable capture
+const snap = async (filename, { fullPage = true, settle = 1800 } = {}) => {
+  // wait for word-in / curtain animations to finish naturally
+  await new Promise(r => setTimeout(r, settle));
+  // dismiss any remaining curtain and force reveals to "in" so anything
+  // still waiting on IntersectionObserver becomes visible
   await send("Runtime.evaluate", {
-    expression: "document.querySelectorAll('*').forEach(el=>{try{el.style.animation='none';el.style.transition='none'}catch(e){}}); window.requestAnimationFrame=()=>0;",
+    expression: `
+      document.querySelectorAll('.curtain').forEach(el => el.classList.add('out'));
+      document.querySelectorAll('.reveal').forEach(el => el.classList.add('in'));
+      document.querySelectorAll('.pipeline').forEach(el => el.classList.add('in'));
+      document.querySelectorAll('.word-in, .split-letter').forEach(el => {
+        el.style.opacity = '1';
+        el.style.transform = 'none';
+      });
+      document.querySelectorAll('.cursor-dot').forEach(el => el.style.display = 'none');
+      // Replace any "0" or partial CountUp values with their full targets
+      const targets = ['13', '8', '20+', '19'];
+      const stats = document.querySelectorAll('section .font-display');
+      let i = 0;
+      stats.forEach(el => {
+        if (i < targets.length && /^\\d+\\+?$/.test(el.textContent.trim())) {
+          el.textContent = targets[i++];
+        }
+      });
+      window.requestAnimationFrame = () => 0;
+    `,
   });
-  await new Promise(r => setTimeout(r, 350));
+  await new Promise(r => setTimeout(r, 400));
   const r = await send("Page.captureScreenshot", {
     format: "png",
     captureBeyondViewport: fullPage,
