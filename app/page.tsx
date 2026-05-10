@@ -67,52 +67,7 @@ function Reveal({
   );
 }
 
-/* ------------------------------------------------------------------ *
- *  Custom cursor — hidden on touch, scoped to body.cursor-immersive  *
- * ------------------------------------------------------------------ */
-function CustomCursor() {
-  const ref = useRef<HTMLDivElement>(null);
-  const [label, setLabel] = useState("");
-  const [hover, setHover] = useState(false);
 
-  useEffect(() => {
-    const dot = ref.current;
-    if (!dot) return;
-    let x = window.innerWidth / 2, y = window.innerHeight / 2;
-    let tx = x, ty = y;
-    let raf = 0;
-    const onMove = (e: MouseEvent) => { tx = e.clientX; ty = e.clientY; };
-    const onOver = (e: MouseEvent) => {
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
-      const tagged = target.closest<HTMLElement>("[data-cursor]");
-      if (tagged) {
-        setLabel(tagged.getAttribute("data-cursor") ?? "");
-        setHover(true);
-      } else if (target.closest("a, button")) {
-        setLabel(""); setHover(true);
-      } else {
-        setLabel(""); setHover(false);
-      }
-    };
-    const tick = () => {
-      x += (tx - x) * 0.22; y += (ty - y) * 0.22;
-      dot.style.transform = `translate(${x}px, ${y}px) translate(-50%, -50%)`;
-      raf = requestAnimationFrame(tick);
-    };
-    window.addEventListener("mousemove", onMove);
-    window.addEventListener("mouseover", onOver);
-    raf = requestAnimationFrame(tick);
-    return () => {
-      window.removeEventListener("mousemove", onMove);
-      window.removeEventListener("mouseover", onOver);
-      cancelAnimationFrame(raf);
-    };
-  }, []);
-
-  const cls = "cursor-dot" + (label ? " label" : hover ? " hover" : "");
-  return <div ref={ref} className={cls} aria-hidden="true">{label}</div>;
-}
 
 /* ------------------------------------------------------------------ *
  *  Image slot — fills its absolutely-positioned parent with a photo, *
@@ -159,6 +114,7 @@ function Hero() {
   const tail = "the day they're born.".split(" ");
   return (
     <section
+      id="top"
       style={{
         position: "relative",
         minHeight: "100vh",
@@ -200,7 +156,7 @@ function Hero() {
               lineHeight: 0.98,
               letterSpacing: "-0.04em",
               wordSpacing: "0.12em",
-              maxWidth: "18ch",
+              maxWidth: "26ch",
               fontSize: "clamp(56px, 8vw, 96px)",
             }}
           >
@@ -213,7 +169,6 @@ function Hero() {
                 {w}
               </span>
             ))}
-            <br />
             <span
               className="font-display"
               style={{
@@ -487,7 +442,7 @@ function CounterStrip() {
     { value: "19", suffix: "",  label: "Migrations",     caption: "Sequenced & reversible" },
   ];
   return (
-    <section style={{ position: "relative", zIndex: 2, padding: "60px 0 120px" }}>
+    <section style={{ position: "relative", zIndex: 2, padding: "0 0 120px" }}>
       <div className="container">
         <Reveal>
           <div
@@ -576,7 +531,7 @@ function CounterStrip() {
  * ------------------------------------------------------------------ */
 function Problem() {
   return (
-    <section style={{ position: "relative", zIndex: 2, padding: "60px 0 120px" }}>
+    <section id="problem" style={{ position: "relative", zIndex: 2, padding: "0 0 120px" }}>
       <div className="container">
         <Reveal>
           <div
@@ -948,7 +903,7 @@ function PortalCard({ p }: { p: PortalEntry }) {
 
 function PortalGrid() {
   return (
-    <section style={{ position: "relative", zIndex: 2, padding: "100px 0 120px" }}>
+    <section id="portals" style={{ position: "relative", zIndex: 2, padding: "0 0 120px" }}>
       <div className="container">
         <Reveal>
           <div
@@ -1017,7 +972,7 @@ function Pipeline() {
   ];
 
   return (
-    <section style={{ position: "relative", zIndex: 2, padding: "40px 0 84px" }}>
+    <section id="pipeline" style={{ position: "relative", zIndex: 2, padding: "0 0 84px" }}>
       <div className="container">
         <Reveal>
           <div className="eyebrow">03 — End-to-end pipeline</div>
@@ -1049,9 +1004,9 @@ function Pipeline() {
           >
             <svg
               className="pipeline-svg"
-              viewBox="0 0 1200 220"
-              preserveAspectRatio="none"
-              style={{ width: "100%", height: 220, display: "block" }}
+              viewBox="0 94 1200 32"
+              preserveAspectRatio="xMidYMid meet"
+              style={{ width: "100%", display: "block" }}
               aria-hidden
             >
               <defs>
@@ -1258,7 +1213,7 @@ function DemoAccounts() {
   ], []);
 
   return (
-    <section style={{ position: "relative", zIndex: 2, padding: "60px 0 120px" }}>
+    <section id="accounts" style={{ position: "relative", zIndex: 2, padding: "0 0 120px" }}>
       <div className="container">
         <Reveal>
           <div
@@ -1330,7 +1285,7 @@ function Architecture() {
   ];
 
   return (
-    <section style={{ position: "relative", zIndex: 2, padding: "60px 0 120px" }}>
+    <section id="architecture" style={{ position: "relative", zIndex: 2, padding: "0 0 120px" }}>
       <div className="container">
         <Reveal>
           <div className="grid-arch-intro">
@@ -1503,7 +1458,7 @@ function Architecture() {
  * ------------------------------------------------------------------ */
 function ClosingCTA() {
   return (
-    <section style={{ position: "relative", zIndex: 2, padding: "120px 0 120px" }}>
+    <section style={{ position: "relative", zIndex: 2, padding: "0 0 120px" }}>
       <div style={{ position: "absolute", inset: 0, pointerEvents: "none" }} aria-hidden>
         <div
           style={{
@@ -1586,7 +1541,7 @@ function Footer() {
   return (
     <footer
       style={{
-        position: "relative", zIndex: 2, padding: "60px 0 60px",
+        position: "relative", zIndex: 2, padding: "0 0 60px",
         borderTop: "1px solid var(--glass-border)",
       }}
     >
@@ -1697,11 +1652,7 @@ function ScrollProgress() {
  *  Page export                                                         *
  * ------------------------------------------------------------------ */
 export default function Home() {
-  // Lock body to immersive cursor while this page is mounted.
-  useEffect(() => {
-    document.body.classList.add("cursor-immersive");
-    return () => document.body.classList.remove("cursor-immersive");
-  }, []);
+
 
   return (
     <main style={{ position: "relative", overflow: "hidden" }}>
@@ -1714,7 +1665,7 @@ export default function Home() {
       <div className="film-grain" aria-hidden />
       <ScrollProgress />
       <PageCurtain />
-      <CustomCursor />
+
 
       <Hero />
       <Marquee />

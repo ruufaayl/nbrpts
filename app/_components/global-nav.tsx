@@ -13,6 +13,14 @@ const NAV = [
   { href: "/dev",       label: "Observatory", icon: Database },
 ];
 
+const HOME_SECTIONS = [
+  { href: "#problem", label: "Problem" },
+  { href: "#portals", label: "Portals" },
+  { href: "#pipeline", label: "Pipeline" },
+  { href: "#accounts", label: "Accounts" },
+  { href: "#architecture", label: "Architecture" },
+];
+
 // Routes that own their own header (scoped portal layouts) or are the
 // cinematic landing page where the global nav would interrupt the design.
 const SCOPED_ROUTES = ["/hospital", "/officer", "/login"];
@@ -47,12 +55,16 @@ export function GlobalNav() {
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.5, ease: [0.2, 0, 0, 1], delay: 0.1 }}
       className="sticky top-0 z-30 px-4 pt-3"
+      style={{
+        background: scrolled ? "var(--color-bg)" : "transparent",
+        backdropFilter: scrolled ? "blur(20px) saturate(140%)" : "none",
+        WebkitBackdropFilter: scrolled ? "blur(20px) saturate(140%)" : "none",
+        borderBottom: scrolled ? "1px solid var(--glass-border)" : "1px solid transparent",
+        transition: "background 0.3s ease, border-color 0.3s ease",
+      }}
     >
       <div
-        className={
-          "mx-auto max-w-7xl rounded-full transition-all duration-300 " +
-          (scrolled ? "glass glass-highlight" : "border border-transparent")
-        }
+        className="mx-auto max-w-7xl rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elev)] shadow-[0_10px_30px_-18px_oklch(0_0_0_/_0.8)]"
       >
         <div className="flex items-center justify-between gap-4 px-4 py-2">
           <Link href="/" className="flex items-center gap-2.5">
@@ -71,9 +83,13 @@ export function GlobalNav() {
           </Link>
 
           <nav className="hidden items-center gap-1 md:flex">
-            {NAV.map((item) => {
-              const Icon = item.icon;
-              const active = pathname === item.href || pathname.startsWith(item.href + "/");
+            {(pathname === "/" ? HOME_SECTIONS : NAV).map((item) => {
+              const isHome = pathname === "/";
+              const active = isHome
+                ? false
+                : (pathname === item.href || pathname.startsWith(item.href + "/"));
+              const Icon = "icon" in item ? (item as (typeof NAV)[number]).icon : null;
+
               return (
                 <Link
                   key={item.href}
@@ -88,12 +104,12 @@ export function GlobalNav() {
                   {active ? (
                     <motion.span
                       layoutId="nav-pill"
-                      className="absolute inset-0 rounded-full bg-[var(--glass-bg-strong)] ring-1 ring-[var(--glass-border-strong)]"
+                      className="absolute inset-0 rounded-full bg-[var(--color-bg-card)] ring-1 ring-[var(--color-border-strong)]"
                       transition={{ type: "spring", stiffness: 380, damping: 30 }}
                     />
                   ) : null}
                   <span className="relative flex items-center gap-1.5">
-                    <Icon className="size-3.5" />
+                    {Icon ? <Icon className="size-3.5" /> : null}
                     {item.label}
                   </span>
                 </Link>
@@ -104,12 +120,12 @@ export function GlobalNav() {
           <button
             type="button"
             onClick={openPalette}
-            className="group inline-flex items-center gap-2 rounded-full border border-[var(--glass-border)] bg-[var(--glass-bg)] px-3 py-1.5 text-xs text-[var(--color-fg-muted)] transition hover:border-[var(--glass-border-strong)] hover:text-[var(--color-fg)]"
+            className="group inline-flex items-center gap-2 rounded-full border border-[var(--color-border)] bg-[var(--color-bg)] px-3 py-1.5 text-xs text-[var(--color-fg-muted)] transition hover:border-[var(--color-border-strong)] hover:text-[var(--color-fg)]"
             aria-label="Open command palette"
           >
             <Command className="size-3.5" />
             <span className="hidden sm:inline">Jump</span>
-            <kbd className="hidden rounded border border-[var(--glass-border)] bg-[var(--glass-bg-strong)] px-1.5 py-0.5 font-mono text-[10px] sm:inline-block">
+            <kbd className="hidden rounded border border-[var(--color-border)] bg-[var(--color-bg-card)] px-1.5 py-0.5 font-mono text-[10px] sm:inline-block">
               {isMac ? "⌘" : "Ctrl"} K
             </kbd>
           </button>

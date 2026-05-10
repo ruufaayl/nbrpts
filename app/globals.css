@@ -55,6 +55,8 @@ body {
   letter-spacing: -0.01em;
 }
 
+html { scroll-behavior: smooth; }
+
 ::selection {
   background: var(--color-accent);
   color: var(--color-accent-fg);
@@ -376,43 +378,7 @@ body {
   color: var(--color-fg-subtle);
 }
 
-/* Body cursor lock for /home only — opt-in via class on <body> */
-body.cursor-immersive { cursor: none; }
-body.cursor-immersive a,
-body.cursor-immersive button { cursor: none; }
-@media (max-width: 1024px) {
-  body.cursor-immersive,
-  body.cursor-immersive a,
-  body.cursor-immersive button { cursor: auto; }
-}
 
-/* Custom cursor (scoped to immersive routes) */
-.cursor-dot {
-  position: fixed;
-  top: 0; left: 0;
-  width: 18px; height: 18px;
-  border-radius: 9999px;
-  background: oklch(1 0 0 / 0.06);
-  border: 1px solid oklch(1 0 0 / 0.4);
-  backdrop-filter: blur(8px) saturate(180%);
-  -webkit-backdrop-filter: blur(8px) saturate(180%);
-  pointer-events: none;
-  z-index: 9999;
-  mix-blend-mode: difference;
-  transform: translate(-50%, -50%);
-  transition: width 0.25s cubic-bezier(.2,0,0,1), height 0.25s cubic-bezier(.2,0,0,1), background 0.2s;
-  display: flex; align-items: center; justify-content: center;
-  font-family: var(--font-mono);
-  font-size: 9px;
-  letter-spacing: 0.15em;
-  text-transform: uppercase;
-  color: oklch(1 0 0 / 0.95);
-  white-space: nowrap;
-  padding: 0 10px;
-  overflow: hidden;
-}
-.cursor-dot.hover { width: 56px; height: 56px; background: oklch(1 0 0 / 0.1); }
-.cursor-dot.label { width: auto; min-width: 88px; height: 36px; padding: 0 14px; border-radius: 999px; }
 
 /* Word stagger + letter split */
 .word-in {
@@ -629,6 +595,4 @@ body.cursor-immersive button { cursor: none; }
     transform: none !important;
   }
   .pipeline-path { stroke-dashoffset: 0 !important; transition: none !important; }
-  body.cursor-immersive { cursor: auto !important; }
-  .cursor-dot { display: none !important; }
 }
