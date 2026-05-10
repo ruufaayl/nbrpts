@@ -6,11 +6,30 @@
 | 2 | Schema & migrations | 🟢 done | 13 tables + 12 enums + 24 indexes + 86 seed rows + `get_schema()` RPC + live ER diagram on `/dev/schema` |
 | 3 | Triggers & functions | 🟢 done | 12 audit triggers + state-machine validator + verification log + post-verification cascade + 8 business RPCs + interactive `/dev/triggers` lab |
 | 4 | **RLS & auth** | 🟢 done | `app_user` role table, four helper functions, RLS policies on every domain table, three demo accounts, `/login` page, cookie-aware SSR clients, role-aware DevNav |
-| 5 | Hospital portal | ⚪ pending | Multi-step birth form, IndexedDB offline queue, submissions table, device-simulator page |
+| 5 | **Hospital portal** | 🟢 done | Auth-guarded `/hospital`, dashboard, 4-step submit form, submissions table, IndexedDB-backed device simulator |
 | 6 | AI engine | ⚪ pending | Gemini Flash integration + rules fallback, `ai_review_log` writes, live processing feed |
 | 7 | Officer portal | ⚪ pending | Flagged queue, B-Form authorization, reissuance, search, population stats |
 | 8 | Dev observatory full build-out | ⚪ pending | Full query log filters, `pg_stat_statements` panel, RLS policy inspector, free-form SQL panel, EXPLAIN flame graph |
 | 9 | Polish | ⚪ pending | Landing animation pass, demo video, viva prep |
+| 10 | **Academic deliverables** | ⚪ pending | Project report PDF (business rules, ERD, schema, 3NF, design decisions), consolidated SQL script bundle, screenshots package |
+
+## Phase 5 — Done ✅
+
+### Migration `0017_phase5_hospital_rpcs.sql`
+Three SECURITY DEFINER RPCs that let `hospital_staff` clients bypass RLS for legitimate writes/reads scoped to their own hospital:
+- **`submit_birth_record_v2(p_payload jsonb)`** — upserts mother+father by CNIC (re-uses existing `parent_guardian` rows if found), inserts `birth_record` + `birth_record_parent` links, returns `{ brn, status, parent_ids }`. Validates `current_hospital_id()` matches, otherwise raises `insufficient_privilege`.
+- **`get_hospital_dashboard_data()`** — single round-trip JSONB blob with stat tiles (pending/verified/flagged counts, today's submissions, average AI score) plus the latest 10 submissions.
+- **`get_hospital_submissions(p_limit int)`** — paged list of every birth record this hospital has ever filed.
+
+### Frontend
+| Route | What it does |
+|---|---|
+| `/hospital` | Dashboard: 5 stat tiles, recent submissions table, status badges |
+| `/hospital/submit` | 4-step form (Mother → Father → Birth → Review) with Framer Motion `AnimatePresence` page transitions, per-step validation including CNIC `^[0-9]{5}-[0-9]{7}-[0-9]$` and PMDC `^PMDC-[0-9]{6}$` regex, sonner success toast |
+| `/hospital/submissions` | Full submissions table with BRN, status, mother+CNIC, child, CNIN, born/submitted timestamps |
+| `/hospital/device` | IndexedDB-backed device simulator: online/offline toggle, queue records while offline, auto-sync on going back online, status PENDING → SYNCING → SYNCED/FAILED |
+
+Layout enforces auth + role: anonymous → `/login?next=/hospital`; non-hospital roles → friendly access-denied screen with a sign-out button.
 
 ## Phase 4 — Done ✅
 

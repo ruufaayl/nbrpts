@@ -98,7 +98,18 @@ app/
 │   ├── page.tsx
 │   ├── login-form.tsx
 │   └── actions.ts
-├── (portals)/          # Phases 5–7
+├── hospital/           # Phase 5 — auth-gated portal
+│   ├── layout.tsx                   # role guard + portal nav
+│   ├── page.tsx                     # dashboard
+│   ├── _components/status-badge.tsx
+│   ├── submit/
+│   │   ├── page.tsx
+│   │   ├── form.tsx                 # 4-step framer-motion form
+│   │   └── actions.ts               # submit_birth_record_v2 RPC
+│   ├── submissions/page.tsx
+│   └── device/
+│       ├── page.tsx
+│       └── device-simulator.tsx     # IndexedDB queue
 ├── dev/                # observatory (anon-friendly via RPCs)
 │   ├── _components/nav.tsx          # auth-aware nav strip (Phase 4)
 │   ├── page.tsx                     # query feed
@@ -135,5 +146,6 @@ supabase/migrations/
 ├── 0013_get_trigger_lab_data_rpc.sql
 ├── 0014_phase4_app_user.sql                       Phase 4
 ├── 0015_phase4_rls_policies.sql
-└── 0016_phase4_seed_demo_users.sql
+├── 0016_phase4_seed_demo_users.sql
+└── 0017_phase5_hospital_rpcs.sql                  Phase 5
 ```
