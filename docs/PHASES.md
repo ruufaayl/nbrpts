@@ -10,7 +10,7 @@
 | 6 | **AI engine** | 🟢 done | Deterministic rules engine (8 signals) — score, log, transition state machine; `/ai-engine` page with controls + live verdict feed |
 | 7 | **Officer portal** | 🟢 done | Auth-guarded `/officer`, dashboard, queue (pending+flagged), record detail with verify/reject/flag, B-Form authorization+reissuance, search, population stats |
 | 8 | Dev observatory full build-out | ⚪ pending | Full query log filters, `pg_stat_statements` panel, RLS policy inspector, free-form SQL panel, EXPLAIN flame graph |
-| 9 | Polish | ⚪ pending | Landing animation pass, demo video, viva prep |
+| 9 | **Polish — premium design pass** | 🟢 done | Manrope + Fraunces fonts, glassmorphism tokens, animated mesh backdrop, sticky glass nav, ⌘K command palette, cinematic landing with staggered hero + portal cards + flow diagram |
 | 10 | **Academic deliverables** | 🟢 done | Project report PDF (business rules, ERD, schema, 3NF, design decisions), consolidated SQL script bundle, screenshots package — see [`/deliverables`](../deliverables/README.md) |
 
 ## Phase 10 — Done ✅
@@ -29,6 +29,25 @@ The CS2013 academic submission package, generated from the live codebase. Everyt
 - `capture-screenshots.mjs` — drives headless Edge via CDP (no Playwright needed), authenticates as `aku@nbrpts.demo`, walks every public + hospital page.
 - `build-report.mjs` — generates the .docx with `docx` (npm), embedding the screenshots at runtime.
 - `docx-to-pdf.ps1` — Word COM automation to export the .docx as PDF.
+
+## Phase 9 — Done ✅
+
+### Design system upgrade (`app/globals.css`)
+- **Typography**: Manrope (sans) + Fraunces (display serif) + JetBrains Mono. The serif gives headings a governmental editorial gravitas; Manrope handles body and UI with generous letter-spacing and ss01/cv11 OpenType features.
+- **Surface palette**: refined neutrals tuned for glass — slight blue-cool undertone (`oklch 0.13 .005 240` base) so glass blur reads premium rather than muddy.
+- **Glass tokens**: `--glass-bg` (3.5% white), `--glass-border` (8% white), `--glass-blur` 20px with 140% saturation. Helper classes `.glass`, `.glass-strong`, `.glass-highlight` (the highlight class adds a subtle inner gradient stroke for that Apple/Linear feel).
+- **Animated mesh backdrop**: three drifting blob gradients (emerald · steel-blue · violet) with 18-26s eased loops, behind a 56px grid and a radial vignette. Honors `prefers-reduced-motion`.
+- **Accent system**: emerald (`oklch 0.78 .16 158`) with a strong variant + glow shadow.
+- Premium scrollbars + accent-glow utility for CTAs.
+
+### New global components (`app/_components/`)
+- `AmbientBackdrop` — fixed-position mesh + grid + vignette stack.
+- `GlobalNav` — sticky glass nav with animated `layoutId` pill on the active route, NBRPTS wordmark with gradient logo, and a "Jump (⌘K)" button. Hides on scoped layout routes (`/hospital`, `/officer`, `/login`) so portal headers don't double up.
+- `CommandPalette` — Cmd/Ctrl-K opens a glass modal with a fuzzy filter over **15 destinations** grouped by Portals · Hospital · Officer · Observatory · Account. Keyboard navigable (↑↓↵), accessible from every page so any screen is one keystroke away — designed for the pitch/demo flow.
+- `Hero` · `PortalGrid` · `FlowDiagram` — three Framer Motion sections on the landing page with `staggerChildren` entrances, hover lift, gradient halos on the four portal cards, and an animated pipeline diagram (Hospital → AI Engine → Officer → B-Form).
+
+### Why Manrope + Fraunces
+Manrope is what Linear, Cal, and Cron all reach for — geometric but warm, with excellent number tabular features for the stat tiles. Fraunces in light italic on the hero ("registered the day they're born") gives the project the editorial-government feel of *NYT Magazine* or the UK Government Design System headlines, not a typical SaaS landing page.
 
 ## Phase 6 — Done ✅
 

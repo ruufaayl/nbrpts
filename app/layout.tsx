@@ -1,12 +1,28 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Manrope, Fraunces, JetBrains_Mono } from "next/font/google";
 import { Toaster } from "sonner";
+import { AmbientBackdrop } from "./_components/ambient-backdrop";
+import { GlobalNav } from "./_components/global-nav";
+import { CommandPalette } from "./_components/command-palette";
 import "./globals.css";
 
-const geistSans = Geist({ variable: "--font-geist-sans", subsets: ["latin"] });
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const manrope = Manrope({
+  variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const fraunces = Fraunces({
+  variable: "--font-display",
+  subsets: ["latin"],
+  display: "swap",
+  axes: ["opsz", "SOFT"],
+});
+
+const jetbrains = JetBrains_Mono({
+  variable: "--font-mono",
+  subsets: ["latin"],
+  display: "swap",
 });
 
 export const metadata: Metadata = {
@@ -21,9 +37,14 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${manrope.variable} ${fraunces.variable} ${jetbrains.variable} antialiased`}
       >
-        {children}
+        <AmbientBackdrop />
+        <div className="relative z-10">
+          <GlobalNav />
+          {children}
+        </div>
+        <CommandPalette />
         <Toaster theme="dark" position="bottom-right" />
       </body>
     </html>

@@ -67,20 +67,33 @@ const goto = async (url) => {
   }
 };
 
-const snap = async (filename) => {
+const snap = async (filename, { fullPage = true } = {}) => {
   // disable animations + RAF for stable capture
   await send("Runtime.evaluate", {
     expression: "document.querySelectorAll('*').forEach(el=>{try{el.style.animation='none';el.style.transition='none'}catch(e){}}); window.requestAnimationFrame=()=>0;",
   });
-  await new Promise(r => setTimeout(r, 250));
-  const r = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: true });
+  await new Promise(r => setTimeout(r, 350));
+  const r = await send("Page.captureScreenshot", {
+    format: "png",
+    captureBeyondViewport: fullPage,
+  });
   const path = `${SCREENSHOT_DIR}/${filename}`;
   await fs.writeFile(path, Buffer.from(r.data, "base64"));
   console.log(`✓ ${filename}`);
 };
 
-console.log("→ landing"); await goto(URL + "/");          await snap("00_landing_with_pillars.png");
-console.log("→ /ai-engine"); await goto(URL + "/ai-engine"); await snap("18_ai_engine.png");
+console.log("→ landing hero"); await goto(URL + "/");
+await snap("00_landing_hero.png", { fullPage: false });
+await snap("00_landing_full.png", { fullPage: true });
+
+console.log("→ /ai-engine"); await goto(URL + "/ai-engine");
+await snap("18_ai_engine.png", { fullPage: true });
+
+console.log("→ /dev"); await goto(URL + "/dev");
+await snap("02_dev_query_feed.png", { fullPage: true });
+
+console.log("→ /dev/schema"); await goto(URL + "/dev/schema");
+await snap("03_dev_er_diagram.png", { fullPage: false });
 
 ws.close();
 console.log("done");
