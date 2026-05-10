@@ -11,7 +11,24 @@
 | 7 | Officer portal | ⚪ pending | Flagged queue, B-Form authorization, reissuance, search, population stats |
 | 8 | Dev observatory full build-out | ⚪ pending | Full query log filters, `pg_stat_statements` panel, RLS policy inspector, free-form SQL panel, EXPLAIN flame graph |
 | 9 | Polish | ⚪ pending | Landing animation pass, demo video, viva prep |
-| 10 | **Academic deliverables** | ⚪ pending | Project report PDF (business rules, ERD, schema, 3NF, design decisions), consolidated SQL script bundle, screenshots package |
+| 10 | **Academic deliverables** | 🟢 done | Project report PDF (business rules, ERD, schema, 3NF, design decisions), consolidated SQL script bundle, screenshots package — see [`/deliverables`](../deliverables/README.md) |
+
+## Phase 10 — Done ✅
+
+The CS2013 academic submission package, generated from the live codebase. Everything in `deliverables/` is reproducible from `scripts/`.
+
+### Outputs
+- `deliverables/NBRPTS_Report.pdf` (885 kB) — 12-section project report with cover, abstract, business rules, entities, relationships, ERD figure, 1NF→3NF walkthrough with verification table, schema, design decisions, SQL highlights, triggers + transactions, nine inline screenshots, conclusion.
+- `deliverables/NBRPTS_Report.docx` (690 kB) — editable source.
+- `deliverables/sql/{01..05}.sql` + `nbrpts_full.sql` — sectioned SQL script bundle.
+- `deliverables/screenshots/*.png` — nine 1440×900 captures of the live app (landing, dev observatory triplet, login, hospital portal quartet).
+- `deliverables/README.md` — submission guide.
+
+### Generators (under `scripts/`)
+- `build-sql-bundle.mjs` — concatenates migrations into the four section SQL files plus the mega-bundle.
+- `capture-screenshots.mjs` — drives headless Edge via CDP (no Playwright needed), authenticates as `aku@nbrpts.demo`, walks every public + hospital page.
+- `build-report.mjs` — generates the .docx with `docx` (npm), embedding the screenshots at runtime.
+- `docx-to-pdf.ps1` — Word COM automation to export the .docx as PDF.
 
 ## Phase 5 — Done ✅
 
