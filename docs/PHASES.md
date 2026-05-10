@@ -8,7 +8,7 @@
 | 4 | **RLS & auth** | 🟢 done | `app_user` role table, four helper functions, RLS policies on every domain table, three demo accounts, `/login` page, cookie-aware SSR clients, role-aware DevNav |
 | 5 | **Hospital portal** | 🟢 done | Auth-guarded `/hospital`, dashboard, 4-step submit form, submissions table, IndexedDB-backed device simulator |
 | 6 | AI engine | ⚪ pending | Gemini Flash integration + rules fallback, `ai_review_log` writes, live processing feed |
-| 7 | Officer portal | ⚪ pending | Flagged queue, B-Form authorization, reissuance, search, population stats |
+| 7 | **Officer portal** | 🟢 done | Auth-guarded `/officer`, dashboard, queue (pending+flagged), record detail with verify/reject/flag, B-Form authorization+reissuance, search, population stats |
 | 8 | Dev observatory full build-out | ⚪ pending | Full query log filters, `pg_stat_statements` panel, RLS policy inspector, free-form SQL panel, EXPLAIN flame graph |
 | 9 | Polish | ⚪ pending | Landing animation pass, demo video, viva prep |
 | 10 | **Academic deliverables** | 🟢 done | Project report PDF (business rules, ERD, schema, 3NF, design decisions), consolidated SQL script bundle, screenshots package — see [`/deliverables`](../deliverables/README.md) |
@@ -29,6 +29,38 @@ The CS2013 academic submission package, generated from the live codebase. Everyt
 - `capture-screenshots.mjs` — drives headless Edge via CDP (no Playwright needed), authenticates as `aku@nbrpts.demo`, walks every public + hospital page.
 - `build-report.mjs` — generates the .docx with `docx` (npm), embedding the screenshots at runtime.
 - `docx-to-pdf.ps1` — Word COM automation to export the .docx as PDF.
+
+## Phase 7 — Done ✅
+
+### Migration `0018_phase7_officer_rpcs.sql`
+12 SECURITY DEFINER RPCs for the NADRA officer console:
+
+| RPC | Purpose |
+|---|---|
+| `assert_officer()` | Helper — raises 42501 if caller is not nadra_officer or admin |
+| `get_officer_dashboard_data()` | 8 stat-tile counts + recent actions (last 10) + oldest pending (8) |
+| `get_officer_queue(status, limit, offset)` | Paged queue with mother/hospital/father data + latest AI review per record |
+| `get_officer_record_detail(brn)` | Full single-record view: birth, hospital, parents, child, B-Form, AI history, verification log |
+| `search_records(query, limit)` | ILIKE search across BRN/CNIN/CNIC/mother name/child name with match_field annotation |
+| `get_population_stats()` | by_province + by_district + by_gender + by_delivery_type + top_hospitals |
+| `get_bforms_workload(limit)` | to_authorize + recent_authorized lists |
+| `verify_birth_record_v2(brn, remarks)` | Auth-aware (reads `current_officer_id()`, no parameter) |
+| `reject_birth_record_v2(brn, remarks)` | Auth-aware, requires reason |
+| `flag_birth_record_v2(brn, remarks)` | Auth-aware |
+| `authorize_bform_v2(bform_id)` | Auth-aware, promotes queued SMS to SENT |
+| `reissue_bform_v2(child_id, reason)` | Auth-aware, supersedes via partial unique index, queues new SMS |
+
+### Frontend
+| Route | What it does |
+|---|---|
+| `/officer` | Dashboard: 5 stat tiles (pending, flagged, my actions today, B-Forms to auth, children total), oldest pending list, recent actions feed |
+| `/officer/queue` | Filterable queue (all / pending / flagged); shows AI verdict + confidence per row |
+| `/officer/record/[brn]` | Full record view with 6 cards (birth, hospital, mother, father, child, B-Form), AI history, verification log; verify/reject/flag buttons (state-aware enable/disable) |
+| `/officer/bforms` | Awaiting authorization (one-click authorize) + recently authorized (with reissue button) |
+| `/officer/search` | Free-text search across CNIN, BRN, CNIC, mother name, child name |
+| `/officer/stats` | Population analytics: by province, district, gender, delivery type, top hospitals |
+
+Server actions in `app/officer/actions.ts` wrap the v2 RPCs with `revalidatePath`. Sonner toasts surface success/error. Layout enforces `nadra_officer` or `admin` role; other roles get a friendly access-denied screen.
 
 ## Phase 5 — Done ✅
 
