@@ -3,6 +3,7 @@
 // NBRPTS Homepage — cinematic editorial single-page component.
 // Adapted from the Claude Design handoff (homepage.jsx) for Next.js 16.
 
+import Image from "next/image";
 import Link from "next/link";
 import {
   useCallback,
@@ -114,39 +115,38 @@ function CustomCursor() {
 }
 
 /* ------------------------------------------------------------------ *
- *  Image slot — gradient placeholder until real photography is wired *
+ *  Image slot — fills its absolutely-positioned parent with a photo, *
+ *  then layers a subtle teal grade so it sits inside the dark glass  *
+ *  frame without screaming.                                           *
  * ------------------------------------------------------------------ */
 function ImageSlot({
-  caption, hue = "emerald", aspect = "3 / 4",
-}: { caption: string; hue?: Hue; aspect?: string }) {
+  src, alt, priority = false,
+}: { src: string; alt: string; priority?: boolean }) {
   return (
-    <div
-      style={{
-        position: "absolute", inset: 0,
-        background: `
-          radial-gradient(ellipse at 30% 25%, color-mix(in oklch, ${HUE[hue]} 30%, transparent), transparent 65%),
-          radial-gradient(ellipse at 70% 75%, color-mix(in oklch, var(--hue-violet) 22%, transparent), transparent 70%),
-          linear-gradient(180deg, oklch(0.22 0.01 240), oklch(0.13 0.005 240))
-        `,
-        aspectRatio: aspect,
-        display: "flex", alignItems: "center", justifyContent: "center",
-        padding: 32,
-      }}
-    >
+    <div style={{ position: "absolute", inset: 0, overflow: "hidden" }}>
+      <Image
+        src={src}
+        alt={alt}
+        fill
+        priority={priority}
+        sizes="(max-width: 1024px) 100vw, 480px"
+        style={{ objectFit: "cover", objectPosition: "center" }}
+      />
+      {/* Color-grade overlay — emerald shadows + warm highlights to match
+          the rest of the page. Sits between the photo and the video-frame
+          ::after scanline overlay. */}
       <div
-        className="font-mono"
+        aria-hidden
         style={{
-          fontSize: 11,
-          letterSpacing: "0.18em",
-          textTransform: "uppercase",
-          color: "var(--color-fg-muted)",
-          textAlign: "center",
-          maxWidth: "20ch",
-          lineHeight: 1.6,
+          position: "absolute", inset: 0, pointerEvents: "none",
+          background: `
+            radial-gradient(ellipse 80% 60% at 50% 100%, oklch(0.13 0.005 240 / 0.55), transparent 65%),
+            linear-gradient(180deg, oklch(0.78 0.16 158 / 0) 0%, oklch(0.78 0.16 158 / 0.06) 60%, oklch(0.13 0.005 240 / 0.55) 100%)
+          `,
+          mixBlendMode: "multiply",
+          opacity: 0.85,
         }}
-      >
-        {caption}
-      </div>
+      />
     </div>
   );
 }
@@ -154,22 +154,6 @@ function ImageSlot({
 /* ------------------------------------------------------------------ *
  *  Hero — kinetic word + letter reveal                                *
  * ------------------------------------------------------------------ */
-function RegisteredWord({ delay = 0 }: { delay?: number }) {
-  const letters = "registered".split("");
-  return (
-    <span
-      className="text-shimmer font-display"
-      style={{ fontStyle: "italic", fontWeight: 300, display: "inline-block", position: "relative" }}
-    >
-      {letters.map((l, i) => (
-        <span key={i} className="split-letter" style={{ animationDelay: `${delay + i * 0.06}s` }}>
-          {l}
-        </span>
-      ))}
-    </span>
-  );
-}
-
 function Hero() {
   const headline = "Every Pakistani child,".split(" ");
   const tail = "the day they're born.".split(" ");
@@ -178,7 +162,7 @@ function Hero() {
       style={{
         position: "relative",
         minHeight: "100vh",
-        paddingTop: 120,
+        paddingTop: 96,
         paddingBottom: 80,
       }}
     >
@@ -230,7 +214,16 @@ function Hero() {
               </span>
             ))}
             <br />
-            <RegisteredWord delay={0.15 + headline.length * 0.08} />
+            <span
+              className="font-display"
+              style={{
+                fontStyle: "italic",
+                fontWeight: 300,
+                color: "var(--color-accent)",
+              }}
+            >
+              registered
+            </span>
             <span style={{ display: "inline-block", width: "0.42em" }} />
             {tail.map((w, i) => (
               <span
@@ -346,7 +339,11 @@ function Hero() {
               border: "1px solid var(--glass-border-strong)",
             }}
           >
-            <ImageSlot caption="Delivery ward · mother & child · NADRA imagery" hue="emerald" />
+            <ImageSlot
+              src="/hero-portrait.png"
+              alt="Newborn swaddled in a hospital blanket, parent's hand resting alongside, captured at 3 AM in a Karachi delivery ward."
+              priority
+            />
             <div className="video-frame__corner tl" />
             <div className="video-frame__corner tr" />
             <div className="video-frame__corner bl" />
@@ -654,7 +651,10 @@ function Problem() {
                 position: "relative",
               }}
             >
-              <ImageSlot caption="Hospital ward · paper birth slips · NADRA queue" hue="violet" aspect="4 / 5" />
+              <ImageSlot
+                src="/problem-figure.png"
+                alt="Stack of weathered manila folders and paper birth-registration slips lit by a brass desk lamp in a Pakistani government records room."
+              />
               <div className="video-frame__corner tl" />
               <div className="video-frame__corner tr" />
               <div className="video-frame__corner bl" />
@@ -1017,7 +1017,7 @@ function Pipeline() {
   ];
 
   return (
-    <section style={{ position: "relative", zIndex: 2, padding: "60px 0 120px" }}>
+    <section style={{ position: "relative", zIndex: 2, padding: "40px 0 84px" }}>
       <div className="container">
         <Reveal>
           <div className="eyebrow">03 — End-to-end pipeline</div>
@@ -1043,8 +1043,8 @@ function Pipeline() {
             ref={ref}
             className="glass glass-highlight pipeline"
             style={{
-              marginTop: 56, borderRadius: 28,
-              padding: "56px 48px 48px", position: "relative",
+              marginTop: 36, borderRadius: 28,
+              padding: "40px 36px 34px", position: "relative",
             }}
           >
             <svg
