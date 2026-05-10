@@ -178,20 +178,13 @@ function Hero() {
       style={{
         position: "relative",
         minHeight: "100vh",
-        paddingTop: 140,
+        paddingTop: 120,
         paddingBottom: 80,
       }}
     >
       <div
-        className="container"
-        style={{
-          position: "relative",
-          zIndex: 2,
-          display: "grid",
-          gridTemplateColumns: "1.4fr 1fr",
-          gap: 60,
-          alignItems: "center",
-        }}
+        className="container grid-hero"
+        style={{ position: "relative", zIndex: 2 }}
       >
         <div>
           <div
@@ -314,7 +307,7 @@ function Hero() {
           </div>
 
           <div
-            className="word-in"
+            className="word-in hide-mobile"
             style={{
               animationDelay: "1.3s", marginTop: 96,
               display: "flex", alignItems: "center", gap: 14,
@@ -520,12 +513,11 @@ function CounterStrip() {
         </Reveal>
         <Reveal delay={80}>
           <div
+            className="grid-stats-4"
             style={{
               borderTop: "1px solid var(--glass-border-strong)",
               borderBottom: "1px solid var(--glass-border)",
               padding: "44px 0",
-              display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-              gap: 0,
             }}
           >
             {stats.map((s, i) => (
@@ -651,13 +643,7 @@ function Problem() {
           </blockquote>
         </Reveal>
 
-        <div
-          style={{
-            marginTop: 100,
-            display: "grid", gridTemplateColumns: "1fr 1fr",
-            gap: 64, alignItems: "start",
-          }}
-        >
+        <div className="grid-2" style={{ marginTop: 100 }}>
           <Reveal delay={120}>
             <div
               className="video-frame glass-highlight"
@@ -999,13 +985,7 @@ function PortalGrid() {
         </Reveal>
 
         <Reveal delay={80}>
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(2, 1fr)",
-              gap: 14,
-            }}
-          >
+          <div className="grid-cards-2">
             {PORTALS.map((p) => <PortalCard key={p.href} p={p} />)}
           </div>
         </Reveal>
@@ -1068,6 +1048,7 @@ function Pipeline() {
             }}
           >
             <svg
+              className="pipeline-svg"
               viewBox="0 0 1200 220"
               preserveAspectRatio="none"
               style={{ width: "100%", height: 220, display: "block" }}
@@ -1108,12 +1089,7 @@ function Pipeline() {
               ))}
             </svg>
 
-            <div
-              style={{
-                display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-                gap: 18, marginTop: -100, position: "relative", zIndex: 2,
-              }}
-            >
+            <div className="grid-pipeline-steps">
               {STEPS.map((s, i) => {
                 const Icon = s.icon;
                 return (
@@ -1160,13 +1136,7 @@ function Pipeline() {
               })}
             </div>
 
-            <div
-              style={{
-                display: "grid", gridTemplateColumns: "repeat(4, 1fr)",
-                marginTop: 44, gap: 18,
-                borderTop: "1px solid var(--glass-border)", paddingTop: 28,
-              }}
-            >
+            <div className="grid-pipeline-meta">
               {[
                 { l: "row inserted",    r: "births" },
                 { l: "rules evaluated", r: "8 signals" },
@@ -1326,11 +1296,7 @@ function DemoAccounts() {
         </Reveal>
 
         <Reveal delay={120}>
-          <div
-            style={{
-              display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 14,
-            }}
-          >
+          <div className="grid-cards-3">
             {ACCOUNTS.map((a) => <AccountCard key={a.email} a={a} />)}
           </div>
         </Reveal>
@@ -1367,12 +1333,7 @@ function Architecture() {
     <section style={{ position: "relative", zIndex: 2, padding: "60px 0 120px" }}>
       <div className="container">
         <Reveal>
-          <div
-            style={{
-              display: "grid", gridTemplateColumns: "1.1fr 1fr",
-              gap: 80, alignItems: "end", marginBottom: 36,
-            }}
-          >
+          <div className="grid-arch-intro">
             <div>
               <div className="eyebrow">05 — Architecture</div>
               <h2
@@ -1581,12 +1542,7 @@ function ClosingCTA() {
           </h2>
         </Reveal>
         <Reveal delay={160}>
-          <div
-            style={{
-              marginTop: 56, display: "flex", flexWrap: "wrap", gap: 14,
-              justifyContent: "center",
-            }}
-          >
+          <div className="cta-row" style={{ marginTop: 56 }}>
             <Link
               href="/dev"
               data-cursor="Open →"
@@ -1634,13 +1590,7 @@ function Footer() {
         borderTop: "1px solid var(--glass-border)",
       }}
     >
-      <div
-        className="container"
-        style={{
-          display: "grid", gridTemplateColumns: "1fr 1.5fr auto",
-          gap: 40, alignItems: "start",
-        }}
-      >
+      <div className="container grid-footer">
         <div>
           <div
             className="font-display"
