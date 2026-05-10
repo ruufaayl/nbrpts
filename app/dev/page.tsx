@@ -1,4 +1,4 @@
-import { supabaseServer } from "@/lib/supabase/server";
+import { getSupabaseServer } from "@/lib/supabase/server";
 import type { QueryLogRow } from "@/lib/supabase/types";
 import { DevNav } from "./_components/nav";
 import { QueryFeed } from "./query-feed";
@@ -7,11 +7,13 @@ import { PingButton } from "./ping-button";
 export const dynamic = "force-dynamic";
 
 async function fireDevPing() {
-  await supabaseServer.rpc("dev_ping");
+  const supabase = await getSupabaseServer();
+  await supabase.rpc("dev_ping");
 }
 
 async function loadInitialFeed(): Promise<QueryLogRow[]> {
-  const { data, error } = await supabaseServer
+  const supabase = await getSupabaseServer();
+  const { data, error } = await supabase
     .from("query_log")
     .select("*")
     .order("ran_at", { ascending: false })

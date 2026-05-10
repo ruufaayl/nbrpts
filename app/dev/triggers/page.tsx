@@ -1,4 +1,4 @@
-import { supabaseServer } from "@/lib/supabase/server";
+import { getSupabaseServer } from "@/lib/supabase/server";
 import type {
   AuditEntry,
   CurrentBformOption,
@@ -21,9 +21,10 @@ type LabData = {
 };
 
 async function loadAll() {
+  const supabase = await getSupabaseServer();
   const [summaryRes, labRes] = await Promise.all([
-    supabaseServer.rpc("get_pipeline_summary"),
-    supabaseServer.rpc("get_trigger_lab_data"),
+    supabase.rpc("get_pipeline_summary"),
+    supabase.rpc("get_trigger_lab_data"),
   ]);
 
   const summary = (summaryRes.data ?? null) as PipelineSummary | null;

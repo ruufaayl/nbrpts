@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { supabaseServer } from "@/lib/supabase/server";
+import { getSupabaseServer } from "@/lib/supabase/server";
 
 const DEMO_NAMES = [
   "Ahmad", "Hassan", "Hussain", "Fatima", "Mariam", "Zara", "Bilal",
@@ -15,13 +15,15 @@ function randomName() {
 }
 
 export async function submitDemoRecordAction() {
-  const { data: hospital } = await supabaseServer
+  const supabase = await getSupabaseServer();
+
+  const { data: hospital } = await supabase
     .from("hospital")
     .select("hospital_id")
     .eq("hrn", "HRN-2019-0001")
     .single();
 
-  const { data: mother } = await supabaseServer
+  const { data: mother } = await supabase
     .from("parent_guardian")
     .select("guardian_id")
     .eq("gender", "FEMALE")
@@ -33,7 +35,7 @@ export async function submitDemoRecordAction() {
     return { ok: false as const, error: "Could not find demo hospital or mother." };
   }
 
-  const { data, error } = await supabaseServer.rpc("submit_birth_record", {
+  const { data, error } = await supabase.rpc("submit_birth_record", {
     p_hospital_id: hospital.hospital_id,
     p_mother_id: mother.guardian_id,
     p_father_id: null,
@@ -54,7 +56,8 @@ export async function submitDemoRecordAction() {
 }
 
 export async function verifyAction(birthRecordId: string, officerId: string) {
-  const { data, error } = await supabaseServer.rpc("verify_birth_record", {
+  const supabase = await getSupabaseServer();
+  const { data, error } = await supabase.rpc("verify_birth_record", {
     p_birth_record_id: birthRecordId,
     p_officer_id: officerId,
     p_remarks: "Verified from /dev/triggers lab",
@@ -68,7 +71,8 @@ export async function verifyAction(birthRecordId: string, officerId: string) {
 }
 
 export async function authorizeAction(bformId: string, officerId: string) {
-  const { data, error } = await supabaseServer.rpc("authorize_bform", {
+  const supabase = await getSupabaseServer();
+  const { data, error } = await supabase.rpc("authorize_bform", {
     p_bform_id: bformId,
     p_officer_id: officerId,
   });
@@ -85,7 +89,8 @@ export async function reissueAction(
   officerId: string,
   reason: string
 ) {
-  const { data, error } = await supabaseServer.rpc("reissue_bform", {
+  const supabase = await getSupabaseServer();
+  const { data, error } = await supabase.rpc("reissue_bform", {
     p_child_id: childId,
     p_officer_id: officerId,
     p_reason: reason,
@@ -96,4 +101,10 @@ export async function reissueAction(
     ok: true as const,
     message: `Reissued as ${data?.bform_number} (v${data?.version}).`,
   };
+}
+
+export async function signOutAction() {
+  const supabase = await getSupabaseServer();
+  await supabase.auth.signOut();
+  revalidatePath("/", "layout");
 }

@@ -1,4 +1,4 @@
-import { supabaseServer } from "@/lib/supabase/server";
+import { getSupabaseServer } from "@/lib/supabase/server";
 import type { SchemaPayload } from "@/lib/schema/types";
 import { DevNav } from "../_components/nav";
 import { SchemaDiagram } from "./schema-diagram";
@@ -6,7 +6,8 @@ import { SchemaDiagram } from "./schema-diagram";
 export const dynamic = "force-dynamic";
 
 async function loadSchema(): Promise<SchemaPayload | null> {
-  const { data, error } = await supabaseServer.rpc("get_schema");
+  const supabase = await getSupabaseServer();
+  const { data, error } = await supabase.rpc("get_schema");
   if (error) {
     console.error("[dev/schema] get_schema failed:", error.message);
     return null;
@@ -69,18 +70,9 @@ export default async function SchemaObservatoryPage() {
         </div>
 
         <div className="mt-8 flex items-center gap-3 text-xs text-[var(--color-fg-subtle)]">
-          <Legend
-            color="var(--color-accent)"
-            label="primary key"
-          />
-          <Legend
-            color="var(--color-fg-muted)"
-            label="foreign key"
-          />
-          <Legend
-            color="var(--color-fg-subtle)"
-            label="unique"
-          />
+          <Legend color="var(--color-accent)" label="primary key" />
+          <Legend color="var(--color-fg-muted)" label="foreign key" />
+          <Legend color="var(--color-fg-subtle)" label="unique" />
           <span className="ml-auto font-mono">
             RLS enabled on {tablesWithRls} / {payload.tables.length}
           </span>
@@ -138,10 +130,7 @@ function Stat({ label, value }: { label: string; value: number }) {
 function Legend({ color, label }: { color: string; label: string }) {
   return (
     <span className="inline-flex items-center gap-1.5 font-mono">
-      <span
-        className="size-1.5 rounded-full"
-        style={{ background: color }}
-      />
+      <span className="size-1.5 rounded-full" style={{ background: color }} />
       {label}
     </span>
   );
