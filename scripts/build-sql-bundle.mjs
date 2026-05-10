@@ -29,6 +29,7 @@ const sections = {
       "0013_get_trigger_lab_data_rpc.sql",
       "0017_phase5_hospital_rpcs.sql",
       "0018_phase7_officer_rpcs.sql",
+      "0019_phase6_ai_engine.sql",
     ],
   },
   "03_security_rls.sql": {

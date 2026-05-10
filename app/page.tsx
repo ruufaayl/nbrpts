@@ -46,16 +46,19 @@ export default function LandingPage() {
 
         <div className="mt-24 grid gap-px overflow-hidden rounded-2xl border border-[var(--color-border)] bg-[var(--color-border)] md:grid-cols-3">
           <Pillar
+            href="/hospital"
             icon={<Hospital className="size-5" />}
             title="Hospital portal"
             body="Offline-first birth-record entry. Auto-syncs when connectivity returns. Tamper-proof local storage."
           />
           <Pillar
+            href="/ai-engine"
             icon={<ShieldCheck className="size-5" />}
             title="AI verification"
             body="Eight rules, real-time JSON verdicts, auto-approve on high confidence, human review on flags."
           />
           <Pillar
+            href="/officer"
             icon={<Database className="size-5" />}
             title="Officer dashboard"
             body="B-Form authorization, reissuance, full audit trail, district-level population analytics."
@@ -74,23 +77,30 @@ export default function LandingPage() {
 }
 
 function Pillar({
+  href,
   icon,
   title,
   body,
 }: {
+  href: string;
   icon: React.ReactNode;
   title: string;
   body: string;
 }) {
   return (
-    <div className="bg-[var(--color-bg)] p-6 transition hover:bg-[var(--color-bg-elev)]">
+    <Link
+      href={href}
+      className="group block bg-[var(--color-bg)] p-6 transition hover:bg-[var(--color-bg-elev)]"
+    >
       <div className="flex size-10 items-center justify-center rounded-lg bg-[var(--color-bg-card)] text-[var(--color-accent)]">
         {icon}
       </div>
-      <div className="mt-5 text-base font-medium">{title}</div>
+      <div className="mt-5 text-base font-medium transition group-hover:text-[var(--color-accent)]">
+        {title}
+      </div>
       <div className="mt-2 text-sm leading-relaxed text-[var(--color-fg-muted)]">
         {body}
       </div>
-    </div>
+    </Link>
   );
 }

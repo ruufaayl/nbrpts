@@ -7,7 +7,7 @@
 | 3 | Triggers & functions | 🟢 done | 12 audit triggers + state-machine validator + verification log + post-verification cascade + 8 business RPCs + interactive `/dev/triggers` lab |
 | 4 | **RLS & auth** | 🟢 done | `app_user` role table, four helper functions, RLS policies on every domain table, three demo accounts, `/login` page, cookie-aware SSR clients, role-aware DevNav |
 | 5 | **Hospital portal** | 🟢 done | Auth-guarded `/hospital`, dashboard, 4-step submit form, submissions table, IndexedDB-backed device simulator |
-| 6 | AI engine | ⚪ pending | Gemini Flash integration + rules fallback, `ai_review_log` writes, live processing feed |
+| 6 | **AI engine** | 🟢 done | Deterministic rules engine (8 signals) — score, log, transition state machine; `/ai-engine` page with controls + live verdict feed |
 | 7 | **Officer portal** | 🟢 done | Auth-guarded `/officer`, dashboard, queue (pending+flagged), record detail with verify/reject/flag, B-Form authorization+reissuance, search, population stats |
 | 8 | Dev observatory full build-out | ⚪ pending | Full query log filters, `pg_stat_statements` panel, RLS policy inspector, free-form SQL panel, EXPLAIN flame graph |
 | 9 | Polish | ⚪ pending | Landing animation pass, demo video, viva prep |
@@ -29,6 +29,27 @@ The CS2013 academic submission package, generated from the live codebase. Everyt
 - `capture-screenshots.mjs` — drives headless Edge via CDP (no Playwright needed), authenticates as `aku@nbrpts.demo`, walks every public + hospital page.
 - `build-report.mjs` — generates the .docx with `docx` (npm), embedding the screenshots at runtime.
 - `docx-to-pdf.ps1` — Word COM automation to export the .docx as PDF.
+
+## Phase 6 — Done ✅
+
+### Migration `0019_phase6_ai_engine.sql`
+A pure-SQL deterministic rules engine — no external API key required. Three RPCs:
+
+| RPC | Purpose |
+|---|---|
+| `ai_score_record(brn)` | Pure scoring, no side effects. Returns `{verdict, confidence_score, flags_raised, reasons}`. Eight signals: implausible weight, future birth date, mother age, weight band, missing CNIC, no father, non-live outcome, duplicate detection (mother + DOB within 12h). |
+| `ai_process_record(brn)` | Score → INSERT `ai_review_log` → UPDATE `birth_record.status`. The state-machine + post-verification cascade triggers fire automatically. PASS at confidence ≥ 0.85 auto-verifies. FLAG queues for human review. REJECT auto-rejects with reasons. |
+| `ai_process_all_pending(limit)` | Batch processor. Per-record `BEGIN/EXCEPTION/END` so one failure doesn't poison the batch. Returns processed/passed/flagged/rejected/error counts. |
+| `get_ai_engine_data()` | Dashboard data: counts, verdict_breakdown, avg_confidence per verdict, recent_reviews (25), next_pending (10). |
+
+The engine acts as the AI system officer (`EMP-999999`) so verification_log + audit_trail entries are correctly attributed.
+
+### Frontend
+| Route | What it does |
+|---|---|
+| `/ai-engine` | Anonymous-accessible. 5 stat tiles (pending, flagged, reviews today, reviews total, human overrides). Engine controls panel: "Process next" + "Process all (N)". Verdict breakdown card with avg confidence per verdict. Next-in-queue list. Recent reviews feed with verdict pill, confidence, flag codes inline. |
+
+Landing page pillars now link to `/hospital`, `/ai-engine`, `/officer`. The AI engine RPCs are granted to `anon` so the demo runs without a sign-in.
 
 ## Phase 7 — Done ✅
 
